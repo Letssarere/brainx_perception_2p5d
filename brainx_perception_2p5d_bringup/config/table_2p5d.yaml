@@ -1,0 +1,50 @@
+/**:
+  ros__parameters:
+    "geometry.table_frame": "table_frame"
+    "geometry.origin_x": 0.0
+    "geometry.origin_y": 0.0
+    "geometry.width": 1.2
+    "geometry.depth": 0.4
+    "geometry.slot_z_min": 0.015
+    "geometry.slot_z_max": 0.25
+    "geometry.columns": 12
+    "geometry.rows": 2
+
+    "perception.min_depth_m": 0.2
+    "perception.max_depth_m": 2.5
+    "perception.grid_resolution_m": 0.05
+    "perception.pixel_stride": 2
+    "perception.occupied_height_threshold_m": 0.05
+    "perception.occupied_score_threshold": 0.45
+    "perception.visibility_visible_threshold": 0.2
+    "perception.occupied_increment": 0.18
+    "perception.occupied_decay": 0.92
+    "perception.visibility_increment": 0.25
+    "perception.visibility_decay": 0.88
+
+    "fsm.occupied_enter_support_ratio": 0.28
+    "fsm.occupied_exit_support_ratio": 0.18
+    "fsm.occupied_height_threshold_m": 0.07
+    "fsm.free_support_ratio_max": 0.10
+    "fsm.free_height_max_m": 0.04
+    "fsm.free_min_visibility_ratio": 0.75
+    "fsm.unknown_visibility_ratio": 0.35
+    "fsm.occupied_dwell_frames": 2
+    "fsm.free_dwell_frames": 2
+    "fsm.unknown_dwell_frames": 1
+
+    "synthetic.width": 160
+    "synthetic.height": 120
+    "synthetic.fx": 180.0
+    "synthetic.fy": 180.0
+    "synthetic.cx": 80.0
+    "synthetic.cy": 60.0
+    "synthetic.camera_frame": "synthetic_camera"
+    "synthetic.camera_x": 0.6
+    "synthetic.camera_y": 0.2
+    "synthetic.camera_z": 1.1
+    "synthetic.publish_rate_hz": 5.0
+    "synthetic.object_height_m": 0.14
+    "synthetic.object_width_scale": 0.58
+    "synthetic.object_depth_scale": 0.50
+    "synthetic.occupied_slots": [2, 5, 16]

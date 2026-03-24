@@ -1,0 +1,6 @@
+uint8 slot_id
+string evidence_category
+float32 occupied_support_ratio
+float32 max_height_m
+float32 visibility_ratio
+float32 confidence

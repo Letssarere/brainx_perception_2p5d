@@ -1,0 +1,10 @@
+std_msgs/Header header
+uint32 width
+uint32 height
+float32 resolution
+geometry_msgs/Pose origin
+float32[] height_residual_m
+float32[] occupied_score
+uint32[] valid_count
+float32[] variance
+float32[] visibility_score
