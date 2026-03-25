@@ -73,4 +73,5 @@ conda run -n ros_env bash -lc 'source install/setup.bash && \
 - [Mac Development Plan](/Users/junho/brainx_perception_2p5d/docs/20_mac_development_plan.md)
 - [Validation Plan](/Users/junho/brainx_perception_2p5d/docs/30_validation_plan.md)
 - [Jetson Handoff](/Users/junho/brainx_perception_2p5d/docs/40_jetson_handoff.md)
+- [Jetson Session Start](/Users/junho/brainx_perception_2p5d/docs/70_jetson_session_start.md)
 - [Open Issues](/Users/junho/brainx_perception_2p5d/docs/50_open_issues.md)
