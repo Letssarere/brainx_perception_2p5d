@@ -44,14 +44,27 @@ Test:
 ```bash
 conda run -n ros_env colcon test --packages-select \
   brainx_perception_2p5d_slots \
-  brainx_perception_2p5d_map \
   brainx_perception_2p5d_bringup
 ```
 
-Run the synthetic Mac demo:
+Run the live synthetic Mac demo:
 ```bash
 conda run -n ros_env bash -lc 'source install/setup.bash && \
-  ros2 launch brainx_perception_2p5d_bringup table_2p5d_replay.launch.py'
+  ros2 launch brainx_perception_2p5d_bringup table_2p5d_synthetic.launch.py'
+```
+
+Generate a deterministic synthetic bag:
+```bash
+conda run -n ros_env bash -lc 'source install/setup.bash && \
+  ros2 run brainx_perception_2p5d_bringup generate_synthetic_bag.py \
+    --scenario occupied_static'
+```
+
+Replay a generated bag:
+```bash
+conda run -n ros_env bash -lc 'source install/setup.bash && \
+  ros2 launch brainx_perception_2p5d_bringup table_2p5d_replay.launch.py \
+    bag_path:=/tmp/brainx_2p5d_demo/bag'
 ```
 
 ## Docs

@@ -7,7 +7,10 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+ament_python_install_package(${PROJECT_NAME})
 
 install(
   DIRECTORY launch config rviz
@@ -16,6 +19,7 @@ install(
 
 install(
   PROGRAMS
+    scripts/generate_synthetic_bag.py
     scripts/synthetic_depth_publisher.py
   DESTINATION lib/${PROJECT_NAME}
 )
@@ -33,11 +37,18 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 
   add_test(
-    NAME bringup_smoke_test
+    NAME bringup_synthetic_scenarios_test
     COMMAND /bin/bash -lc
             "source ${CMAKE_CURRENT_SOURCE_DIR}/../install/setup.bash && ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_smoke.py"
   )
-  set_tests_properties(bringup_smoke_test PROPERTIES TIMEOUT 40)
+  set_tests_properties(bringup_synthetic_scenarios_test PROPERTIES TIMEOUT 70)
+
+  add_test(
+    NAME bringup_replay_equivalence_test
+    COMMAND /bin/bash -lc
+            "source ${CMAKE_CURRENT_SOURCE_DIR}/../install/setup.bash && ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_replay_equivalence.py"
+  )
+  set_tests_properties(bringup_replay_equivalence_test PROPERTIES TIMEOUT 90)
 endif()
 
 ament_package()

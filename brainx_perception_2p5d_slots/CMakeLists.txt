@@ -72,6 +72,12 @@ if(BUILD_TESTING)
     target_link_libraries(test_tri_state_fsm brainx_perception_2p5d_slots_core)
     target_include_directories(test_tri_state_fsm PRIVATE include)
   endif()
+
+  ament_add_gtest(test_slot_query test/test_slot_query.cpp)
+  if(TARGET test_slot_query)
+    target_link_libraries(test_slot_query brainx_perception_2p5d_slots_core)
+    target_include_directories(test_slot_query PRIVATE include)
+  endif()
 endif()
 
 ament_export_include_directories(include)

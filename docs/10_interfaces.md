@@ -54,8 +54,10 @@ Configuration should be split into:
   - evidence thresholds
 
 ## Launch Entry Points
+- `table_2p5d_synthetic.launch.py`
 - `table_2p5d_replay.launch.py`
-- `table_2p5d_realsense.launch.py`
+- `generate_synthetic_bag.py`
 
-The replay launch is the primary Mac development entrypoint.
-The RealSense launch is for later Jetson integration.
+The synthetic launch is the primary live Mac entrypoint.
+The replay launch reuses the same pipeline and accepts `bag_path`.
+`generate_synthetic_bag.py` creates deterministic replay fixtures on demand.

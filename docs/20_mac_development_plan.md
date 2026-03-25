@@ -12,11 +12,13 @@ Use macOS to complete the core implementation without hardware dependency.
 6. Implement slot query over the 2.5D grid.
 7. Connect slot query to the FSM via evidence messages.
 8. Create replay or synthetic launch files.
+   - `table_2p5d_synthetic.launch.py`
+   - `table_2p5d_replay.launch.py`
 9. Add RViz markers for:
    - slot prisms
    - slot states
    - 2.5D grid debug view
-10. Add unit tests and a minimum replay-based validation path.
+10. Add unit tests and a deterministic replay validation path.
 
 ## Mac-first Constraints
 - Do not assume RealSense wrapper availability.
@@ -26,8 +28,14 @@ Use macOS to complete the core implementation without hardware dependency.
 
 ## Mac Demo Definition
 The Mac demo is complete when:
-- a launch file starts the pipeline with replay or synthetic input
+- both `table_2p5d_synthetic.launch.py` and `table_2p5d_replay.launch.py` start the same pipeline
+- a synthetic bag can be generated on demand with `generate_synthetic_bag.py`
 - slot states are published
 - RViz shows slot and grid debug markers
 - unit tests for geometry and FSM pass
-- the headless smoke path can launch the synthetic pipeline and receive `24` slot states
+- the headless smoke path can validate:
+  - `empty_table` -> all `FREE`
+  - `occupied_static` -> only designated occupied slots
+  - `low_visibility` -> designated slots remain `UNKNOWN`
+  - `insert_remove` -> `FREE -> OCCUPIED -> FREE`
+- replay and live synthetic produce the same stable `SlotStateArray` for static scenarios

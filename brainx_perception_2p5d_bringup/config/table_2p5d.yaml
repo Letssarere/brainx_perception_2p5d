@@ -18,7 +18,7 @@
     "perception.occupied_score_threshold": 0.45
     "perception.visibility_visible_threshold": 0.2
     "perception.occupied_increment": 0.18
-    "perception.occupied_decay": 0.92
+    "perception.occupied_decay": 0.80
     "perception.visibility_increment": 0.25
     "perception.visibility_decay": 0.88
 
@@ -31,11 +31,11 @@
     "fsm.unknown_visibility_ratio": 0.35
     "fsm.occupied_dwell_frames": 2
     "fsm.free_dwell_frames": 2
-    "fsm.unknown_dwell_frames": 1
+    "fsm.unknown_dwell_frames": 3
 
     "synthetic.width": 160
     "synthetic.height": 120
-    "synthetic.fx": 180.0
+    "synthetic.fx": 155.0
     "synthetic.fy": 180.0
     "synthetic.cx": 80.0
     "synthetic.cy": 60.0
@@ -47,4 +47,10 @@
     "synthetic.object_height_m": 0.14
     "synthetic.object_width_scale": 0.58
     "synthetic.object_depth_scale": 0.50
-    "synthetic.occupied_slots": [2, 5, 16]
+    "synthetic.scenario": "occupied_static"
+    "synthetic.occupied_static_slots": [2, 5, 16]
+    "synthetic.low_visibility_slots": [6, 18]
+    "synthetic.insert_remove_slot": 8
+    "synthetic.static_frame_count": 14
+    "synthetic.insert_remove_empty_frames": 10
+    "synthetic.insert_remove_occupied_frames": 10
