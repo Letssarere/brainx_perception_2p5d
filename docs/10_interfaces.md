@@ -10,6 +10,9 @@ Core nodes should consume generic input topics:
 
 TF is also required and must include `table_frame`.
 
+On Jetson, hardware-specific topic names should be adapted to these generic inputs in the bringup layer with ROS 2 launch remappings.
+Do not introduce a relay node only to rename RealSense topics.
+
 ## Internal and Public Topics
 - `/pickup_2p5d/depth_validated`
 - `/pickup_2p5d/visibility_mask`
