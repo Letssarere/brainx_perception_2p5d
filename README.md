@@ -1,124 +1,72 @@
 # brainx_perception_2p5d
 
-`brainx_perception_2p5d` is the dedicated `table-centric 2.5D occupancy` track for pickup-slot detection.
+`brainx_perception_2p5d`는 픽업 슬롯 24칸의 점유 상태를 `table-centric 2.5D` 방식으로 판단하는 기능 저장소다.
 
-The repository is designed for a two-stage workflow:
-- macOS first:
-  - define interfaces
-  - implement core logic
-  - validate with unit tests and replay or synthetic inputs
-  - produce a minimum debug/demo flow
-- Jetson later:
-  - connect RealSense inputs
-  - tune for performance and stability
-  - validate on real pickup-zone conditions
+## 현재 단계
+- synthetic / replay / Jetson / floor-dev 진입 경로는 구현되어 있다.
+- 현재 우선순위는 `floor-dev` 장면에서 pose와 geometry를 맞추고, real bag를 확보하는 것이다.
+- 최신 기준선은 `v0.1.0-floor-dev` 태그다.
 
-## Packages
+## 패키지 구성
 - `brainx_perception_2p5d_msgs`
-  - message contracts for slot state and slot evidence
+  - public/internal 메시지 계약
 - `brainx_perception_2p5d_map`
-  - frontend reject/filter and 2.5D evidence grid generation
+  - depth filter와 2.5D evidence grid 생성
 - `brainx_perception_2p5d_slots`
   - slot layout, slot query, tri-state FSM
 - `brainx_perception_2p5d_bringup`
-  - launch files, YAML configs, RViz configs, hardware/remap integration
+  - launch, YAML, RViz, synthetic/replay/live integration
 
-## Core Pipeline
+## 핵심 파이프라인
 `depth -> frontend reject/filter -> 2.5D evidence grid -> slot query -> tri-state FSM -> /pickup_2p5d/slot_states`
 
-## Development Flow
-1. Read `AGENTS.md` and the files under `docs/`.
-2. Lock interfaces and architecture in docs before expanding implementation.
-3. Finish a Mac-first replay or synthetic demo.
-4. Move to Jetson for camera integration, calibration, and performance tuning.
+## 빠른 시작
+Ubuntu / Jetson 기준:
 
-## Mac Build And Test
-Use the Miniconda `ros_env` environment for all ROS 2 commands on macOS.
-
-Build:
 ```bash
-conda run -n ros_env colcon build --symlink-install
-```
-
-Test:
-```bash
-conda run -n ros_env colcon test --packages-select \
+source /opt/ros/humble/setup.bash
+colcon build --symlink-install --packages-select \
+  brainx_perception_2p5d_map \
   brainx_perception_2p5d_slots \
   brainx_perception_2p5d_bringup
-```
 
-Run the live synthetic Mac demo:
-```bash
-conda run -n ros_env bash -lc 'source install/setup.bash && \
-  ros2 launch brainx_perception_2p5d_bringup table_2p5d_synthetic.launch.py'
-```
-
-Generate a deterministic synthetic bag:
-```bash
-conda run -n ros_env bash -lc 'source install/setup.bash && \
-  ros2 run brainx_perception_2p5d_bringup generate_synthetic_bag.py \
-    --scenario occupied_static'
-```
-
-Replay a generated bag:
-```bash
-conda run -n ros_env bash -lc 'source install/setup.bash && \
-  ros2 launch brainx_perception_2p5d_bringup table_2p5d_replay.launch.py \
-    bag_path:=/tmp/brainx_2p5d_demo/bag'
-```
-
-Run the Jetson RealSense integration path:
-```bash
-source /opt/ros/humble/setup.bash
 source install/setup.bash
-ros2 launch brainx_perception_2p5d_bringup table_2p5d_jetson.launch.py \
-  headless:=true
+colcon test --packages-select \
+  brainx_perception_2p5d_map \
+  brainx_perception_2p5d_slots \
+  brainx_perception_2p5d_bringup \
+  --event-handlers console_direct+
 ```
 
-Run the floor-dev integration path against a taped floor rectangle:
+주요 entrypoint:
+
 ```bash
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-ros2 launch brainx_perception_2p5d_bringup table_2p5d_floor_dev.launch.py \
-  headless:=false
+ros2 launch brainx_perception_2p5d_bringup table_2p5d_synthetic.launch.py
+ros2 launch brainx_perception_2p5d_bringup table_2p5d_replay.launch.py bag_path:=/path/to/bag
+ros2 launch brainx_perception_2p5d_bringup table_2p5d_jetson.launch.py headless:=true
+ros2 launch brainx_perception_2p5d_bringup table_2p5d_floor_dev.launch.py
 ```
 
-Defaults:
-- `depth_topic:=/camera/depth/image_rect_raw`
-- `camera_info_topic:=/camera/depth/camera_info`
-- `color_topic:=/camera/color/image_raw`
-- `color_camera_info_topic:=/camera/color/camera_info`
+현재 live 입력 기본값:
+- `/camera/depth/image_rect_raw`
+- `/camera/depth/camera_info`
+- `/camera/color/image_raw`
+- `/camera/color/camera_info`
 - `camera_frame:=camera_link`
-- `camera_roll:=3.141592653589793`
-- `camera_pitch:=0.0`
-- `camera_yaw:=0.0`
 
-Use the root of the active RealSense TF tree for `camera_frame` so the depth image frame can connect
-through the existing camera transforms. Override the launch args if the live graph uses aligned-depth,
-a different frame name, or an oblique view that needs explicit `camera_roll/pitch/yaw`.
+## 새 세션 시작 순서
+1. `README.md`
+2. [현재 개발 상태](docs/90_current_status.md)
+3. 필요 시 [프로젝트 개요](docs/00_project_overview.md)
+4. 필요 시 [아키텍처](docs/10_architecture.md)
+5. 필요 시 [인터페이스](docs/20_interfaces.md)
+6. 필요 시 [개발 워크플로](docs/30_workflow.md)
+7. 필요 시 [검증 기준](docs/40_validation.md)
 
-For real-scene replay, record the raw camera topics plus `/tf_static`, then replay with:
-```bash
-source /opt/ros/humble/setup.bash
-source install/setup.bash
-ros2 launch brainx_perception_2p5d_bringup table_2p5d_replay.launch.py \
-  bag_path:=/tmp/brainx_2p5d_floor_dev/bag \
-  depth_topic:=/camera/depth/image_rect_raw \
-  camera_info_topic:=/camera/depth/camera_info \
-  color_topic:=/camera/color/image_raw \
-  color_camera_info_topic:=/camera/color/camera_info \
-  replay_tf_static:=true \
-  publish_table_tf:=false
-```
-
-The current occupancy path remains depth-driven. Color topics are plumbed through as auxiliary inputs for calibration and future tasks.
-
-## Docs
-- [Architecture](/Users/junho/brainx_perception_2p5d/docs/00_architecture.md)
-- [Interfaces](/Users/junho/brainx_perception_2p5d/docs/10_interfaces.md)
-- [Mac Development Plan](/Users/junho/brainx_perception_2p5d/docs/20_mac_development_plan.md)
-- [Validation Plan](/Users/junho/brainx_perception_2p5d/docs/30_validation_plan.md)
-- [Jetson Handoff](/Users/junho/brainx_perception_2p5d/docs/40_jetson_handoff.md)
-- [Jetson Session Start](/Users/junho/brainx_perception_2p5d/docs/70_jetson_session_start.md)
-- [Floor Dev Profile](/Users/junho/brainx_perception_2p5d/docs/80_floor_dev_profile.md)
-- [Open Issues](/Users/junho/brainx_perception_2p5d/docs/50_open_issues.md)
+## 문서
+- [프로젝트 개요](docs/00_project_overview.md)
+- [아키텍처](docs/10_architecture.md)
+- [인터페이스](docs/20_interfaces.md)
+- [개발 워크플로](docs/30_workflow.md)
+- [검증 기준](docs/40_validation.md)
+- [현재 개발 상태](docs/90_current_status.md)
