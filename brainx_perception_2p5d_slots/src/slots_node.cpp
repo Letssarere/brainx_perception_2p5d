@@ -180,10 +180,11 @@ private:
     states_msg.header = msg->header;
     states_msg.table_frame = layout_->config().table_frame;
     states_msg.states.reserve(states.size());
+    const auto & slots = layout_->slots();
 
     for (std::size_t index = 0; index < states.size(); ++index) {
       brainx_perception_2p5d_msgs::msg::SlotState state_item;
-      state_item.slot_id = static_cast<uint8_t>(index);
+      state_item.slot_id = static_cast<uint8_t>(slots[index].id);
       state_item.state = to_msg_state(states[index]);
       states_msg.states.push_back(std::move(state_item));
     }

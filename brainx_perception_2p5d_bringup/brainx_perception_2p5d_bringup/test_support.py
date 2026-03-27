@@ -12,6 +12,7 @@ import rclpy
 from brainx_perception_2p5d_bringup.generate_synthetic_bag import generate_bag
 from brainx_perception_2p5d_msgs.msg import SlotStateArray
 from rclpy.node import Node
+from sensor_msgs.msg import CameraInfo, Image
 
 
 class SlotStateWatcher(Node):
@@ -37,6 +38,35 @@ class SlotStateWatcher(Node):
     def _callback(self, msg: SlotStateArray) -> None:
         self._latest_pattern = tuple(item.state for item in msg.states)
         self._sequence += 1
+
+
+class ColorInputWatcher(Node):
+    def __init__(self) -> None:
+        super().__init__("color_input_watcher")
+        self._color_seen = False
+        self._color_camera_info_seen = False
+        self._color_sub = self.create_subscription(
+            Image,
+            "/pickup_2p5d/input/color",
+            self._on_color,
+            10,
+        )
+        self._color_camera_info_sub = self.create_subscription(
+            CameraInfo,
+            "/pickup_2p5d/input/color_camera_info",
+            self._on_color_camera_info,
+            10,
+        )
+
+    @property
+    def have_color_inputs(self) -> bool:
+        return self._color_seen and self._color_camera_info_seen
+
+    def _on_color(self, _msg: Image) -> None:
+        self._color_seen = True
+
+    def _on_color_camera_info(self, _msg: CameraInfo) -> None:
+        self._color_camera_info_seen = True
 
 
 def collect_stable_pattern(
@@ -149,6 +179,35 @@ def collect_slot_transition_sequence(
         _terminate_process(proc)
 
 
+def wait_for_color_inputs(
+    launch_file: str,
+    launch_args: list[str] | None = None,
+    timeout: float = 12.0,
+) -> None:
+    args = list(launch_args or [])
+    if not any(argument.startswith("headless:=") for argument in args):
+        args.append("headless:=true")
+
+    proc = _launch_process(launch_file, args)
+    watcher, shutdown_after = _create_color_input_watcher()
+
+    try:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            rclpy.spin_once(watcher, timeout_sec=0.25)
+            if watcher.have_color_inputs:
+                return
+
+        raise AssertionError(f"color inputs not observed for {launch_file}")
+    except Exception as exc:
+        raise AssertionError(_failure_message(proc, str(exc))) from exc
+    finally:
+        watcher.destroy_node()
+        if shutdown_after and rclpy.ok():
+            rclpy.shutdown()
+        _terminate_process(proc)
+
+
 def generate_temp_bag(scenario_name: str) -> Path:
     temp_root = Path(os.environ.get("TMPDIR", "/tmp")) / f"brainx_2p5d_{os.getpid()}_{int(time.time() * 1000)}"
     bag_path = temp_root / "bag"
@@ -168,6 +227,13 @@ def _create_watcher() -> tuple[SlotStateWatcher, bool]:
     if shutdown_after:
         rclpy.init()
     return SlotStateWatcher(), shutdown_after
+
+
+def _create_color_input_watcher() -> tuple[ColorInputWatcher, bool]:
+    shutdown_after = not rclpy.ok()
+    if shutdown_after:
+        rclpy.init()
+    return ColorInputWatcher(), shutdown_after
 
 
 def _launch_process(launch_file: str, launch_args: list[str]) -> subprocess.Popen[str]:

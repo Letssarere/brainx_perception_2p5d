@@ -56,20 +56,20 @@ TEST(SlotQueryTest, AggregatesOccupiedFreeAndUnknownEvidencePerSlot)
 
   ASSERT_EQ(evidences.size(), layout.slot_count());
 
-  EXPECT_EQ(evidences[2].evidence_category, "occupied");
-  EXPECT_FLOAT_EQ(evidences[2].occupied_support_ratio, 1.0F);
-  EXPECT_FLOAT_EQ(evidences[2].visibility_ratio, 1.0F);
-  EXPECT_FLOAT_EQ(evidences[2].max_height_m, 0.10F);
+  EXPECT_EQ(evidences[4].evidence_category, "occupied");
+  EXPECT_FLOAT_EQ(evidences[4].occupied_support_ratio, 1.0F);
+  EXPECT_FLOAT_EQ(evidences[4].visibility_ratio, 1.0F);
+  EXPECT_FLOAT_EQ(evidences[4].max_height_m, 0.10F);
 
-  EXPECT_EQ(evidences[3].evidence_category, "free");
-  EXPECT_FLOAT_EQ(evidences[3].occupied_support_ratio, 0.0F);
-  EXPECT_FLOAT_EQ(evidences[3].visibility_ratio, 1.0F);
-  EXPECT_FLOAT_EQ(evidences[3].max_height_m, 0.02F);
-
-  EXPECT_EQ(evidences[6].evidence_category, "unknown");
+  EXPECT_EQ(evidences[6].evidence_category, "free");
   EXPECT_FLOAT_EQ(evidences[6].occupied_support_ratio, 0.0F);
-  EXPECT_FLOAT_EQ(evidences[6].visibility_ratio, 0.0F);
-  EXPECT_FLOAT_EQ(evidences[6].max_height_m, 0.0F);
+  EXPECT_FLOAT_EQ(evidences[6].visibility_ratio, 1.0F);
+  EXPECT_FLOAT_EQ(evidences[6].max_height_m, 0.02F);
+
+  EXPECT_EQ(evidences[12].evidence_category, "unknown");
+  EXPECT_FLOAT_EQ(evidences[12].occupied_support_ratio, 0.0F);
+  EXPECT_FLOAT_EQ(evidences[12].visibility_ratio, 0.0F);
+  EXPECT_FLOAT_EQ(evidences[12].max_height_m, 0.0F);
 }
 
 }  // namespace

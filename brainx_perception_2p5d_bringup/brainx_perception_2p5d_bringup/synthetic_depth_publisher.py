@@ -6,6 +6,8 @@ from sensor_msgs.msg import CameraInfo, Image
 
 from brainx_perception_2p5d_bringup.synthetic_scene import (
     CAMERA_INFO_TOPIC,
+    COLOR_CAMERA_INFO_TOPIC,
+    COLOR_TOPIC,
     DEPTH_TOPIC,
     SyntheticSceneConfig,
     SyntheticSceneRenderer,
@@ -26,6 +28,8 @@ class SyntheticDepthPublisher(Node):
         self.frame_index = 0
         self.depth_pub = self.create_publisher(Image, DEPTH_TOPIC, 10)
         self.camera_info_pub = self.create_publisher(CameraInfo, CAMERA_INFO_TOPIC, 10)
+        self.color_pub = self.create_publisher(Image, COLOR_TOPIC, 10)
+        self.color_camera_info_pub = self.create_publisher(CameraInfo, COLOR_CAMERA_INFO_TOPIC, 10)
         self.timer = self.create_timer(1.0 / self.config.publish_rate_hz, self.publish_frame)
 
         self.get_logger().info(
@@ -35,8 +39,11 @@ class SyntheticDepthPublisher(Node):
     def publish_frame(self) -> None:
         stamp = self.get_clock().now().to_msg()
         depths = self.renderer.render_depth_frame(self.scenario, self.frame_index)
+        colors = self.renderer.render_color_frame(self.scenario, self.frame_index)
         self.depth_pub.publish(self.renderer.make_depth_message(stamp, depths))
         self.camera_info_pub.publish(self.renderer.make_camera_info_message(stamp))
+        self.color_pub.publish(self.renderer.make_color_message(stamp, colors))
+        self.color_camera_info_pub.publish(self.renderer.make_color_camera_info_message(stamp))
         self.frame_index = (self.frame_index + 1) % self.renderer.scenario_frame_count(
             self.scenario
         )

@@ -10,6 +10,8 @@ from sensor_msgs.msg import CameraInfo, Image
 
 DEPTH_TOPIC = "/pickup_2p5d/input/depth"
 CAMERA_INFO_TOPIC = "/pickup_2p5d/input/camera_info"
+COLOR_TOPIC = "/pickup_2p5d/input/color"
+COLOR_CAMERA_INFO_TOPIC = "/pickup_2p5d/input/color_camera_info"
 
 
 @dataclass(frozen=True)
@@ -184,6 +186,43 @@ class SyntheticSceneRenderer:
 
         return depths
 
+    def render_color_frame(self, scenario_name: str, frame_index: int) -> bytes:
+        scenario_state = self._scenario_state(scenario_name, frame_index)
+        occupied_boxes = self._build_boxes(scenario_state.occupied_slots)
+        hidden_slots = set(scenario_state.hidden_slots)
+        pixels = bytearray(self.config.width * self.config.height * 3)
+
+        for v in range(self.config.height):
+            for u in range(self.config.width):
+                origin, ray = self._ray_in_table_frame(u, v)
+                best_t = self._intersect_table(origin, ray)
+                hit_type = "background"
+
+                for box in occupied_boxes:
+                    box_t = self._intersect_box(origin, ray, box)
+                    if box_t is not None and (best_t is None or box_t < best_t):
+                        best_t = box_t
+                        hit_type = "occupied"
+
+                color_index = (v * self.config.width + u) * 3
+                if best_t is None:
+                    pixels[color_index : color_index + 3] = bytes((18, 18, 28))
+                    continue
+
+                hit_x = origin[0] + ray[0] * best_t
+                hit_y = origin[1] + ray[1] * best_t
+                if self._point_is_hidden(hit_x, hit_y, hidden_slots):
+                    pixels[color_index : color_index + 3] = bytes((24, 24, 24))
+                    continue
+
+                if hit_type == "occupied":
+                    pixels[color_index : color_index + 3] = bytes((214, 66, 54))
+                    continue
+
+                pixels[color_index : color_index + 3] = bytes(self._table_color(hit_x, hit_y))
+
+        return bytes(pixels)
+
     def make_depth_message(self, stamp: Time, depths: list[float]) -> Image:
         depth_msg = Image()
         depth_msg.header.stamp = stamp
@@ -195,6 +234,18 @@ class SyntheticSceneRenderer:
         depth_msg.step = self.config.width * 4
         depth_msg.data = array.array("f", depths).tobytes()
         return depth_msg
+
+    def make_color_message(self, stamp: Time, rgb_bytes: bytes) -> Image:
+        color_msg = Image()
+        color_msg.header.stamp = stamp
+        color_msg.header.frame_id = self.config.camera_frame
+        color_msg.height = self.config.height
+        color_msg.width = self.config.width
+        color_msg.encoding = "rgb8"
+        color_msg.is_bigendian = False
+        color_msg.step = self.config.width * 3
+        color_msg.data = rgb_bytes
+        return color_msg
 
     def make_camera_info_message(self, stamp: Time) -> CameraInfo:
         camera_info = CameraInfo()
@@ -242,6 +293,9 @@ class SyntheticSceneRenderer:
         camera_info.d = [0.0, 0.0, 0.0, 0.0, 0.0]
         return camera_info
 
+    def make_color_camera_info_message(self, stamp: Time) -> CameraInfo:
+        return self.make_camera_info_message(stamp)
+
     def _scenario_state(self, scenario_name: str, frame_index: int) -> ScenarioState:
         if scenario_name == "empty_table":
             return ScenarioState(occupied_slots=(), hidden_slots=())
@@ -285,8 +339,8 @@ class SyntheticSceneRenderer:
         return ScenarioState(occupied_slots=(), hidden_slots=())
 
     def _slot_bounds_for(self, slot_id: int) -> tuple[float, float, float, float]:
-        row = slot_id // self.config.columns
-        column = slot_id % self.config.columns
+        column = slot_id // self.config.rows
+        row = slot_id % self.config.rows
         min_x = self.config.origin_x + column * self.slot_width
         max_x = min_x + self.slot_width
         min_y = self.config.origin_y + row * self.slot_depth
@@ -327,6 +381,33 @@ class SyntheticSceneRenderer:
             ):
                 return True
         return False
+
+    def _table_color(self, hit_x: float, hit_y: float) -> tuple[int, int, int]:
+        normalized_x = (hit_x - self.config.origin_x) / self.config.table_width
+        normalized_y = (hit_y - self.config.origin_y) / self.config.table_depth
+        normalized_x = max(0.0, min(normalized_x, 1.0))
+        normalized_y = max(0.0, min(normalized_y, 1.0))
+
+        if self._is_near_slot_boundary(hit_x, hit_y):
+            return (238, 238, 238)
+
+        red = int(34 + 46 * normalized_x)
+        green = int(92 + 64 * normalized_y)
+        blue = int(128 + 52 * (1.0 - normalized_x * 0.5))
+        return (red, green, blue)
+
+    def _is_near_slot_boundary(self, hit_x: float, hit_y: float) -> bool:
+        boundary_margin = 0.005
+        local_x = hit_x - self.config.origin_x
+        local_y = hit_y - self.config.origin_y
+        x_offset = local_x % self.slot_width
+        y_offset = local_y % self.slot_depth
+        return (
+            x_offset < boundary_margin
+            or self.slot_width - x_offset < boundary_margin
+            or y_offset < boundary_margin
+            or self.slot_depth - y_offset < boundary_margin
+        )
 
     def _ray_in_table_frame(
         self, u: int, v: int

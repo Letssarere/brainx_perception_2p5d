@@ -15,8 +15,6 @@ find_package(visualization_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-find_package(image_geometry REQUIRED)
-find_package(cv_bridge REQUIRED)
 find_package(brainx_perception_2p5d_msgs REQUIRED)
 
 add_library(brainx_perception_2p5d_map_core
@@ -40,8 +38,6 @@ ament_target_dependencies(map_node
   tf2
   tf2_ros
   tf2_geometry_msgs
-  image_geometry
-  cv_bridge
   brainx_perception_2p5d_msgs
 )
 

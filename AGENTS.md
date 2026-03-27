@@ -35,6 +35,8 @@
 - Use generic input topics for the core pipeline:
   - `/pickup_2p5d/input/depth`
   - `/pickup_2p5d/input/camera_info`
+  - `/pickup_2p5d/input/color`
+  - `/pickup_2p5d/input/color_camera_info`
 - Keep final namespace under `/pickup_2p5d/...`.
 - Prefer docs-first changes: update docs before or together with code when behavior changes.
 

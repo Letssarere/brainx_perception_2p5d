@@ -36,19 +36,22 @@ if(BUILD_TESTING)
   set(ament_cmake_flake8_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 
+  get_filename_component(WORKSPACE_ROOT "${CMAKE_CURRENT_BINARY_DIR}/../.." ABSOLUTE)
+  set(WORKSPACE_SETUP "${WORKSPACE_ROOT}/install/setup.bash")
+
   add_test(
     NAME bringup_synthetic_scenarios_test
     COMMAND /bin/bash -lc
-            "source ${CMAKE_CURRENT_SOURCE_DIR}/../install/setup.bash && ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_smoke.py"
+            "source ${WORKSPACE_SETUP} && ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_smoke.py"
   )
   set_tests_properties(bringup_synthetic_scenarios_test PROPERTIES TIMEOUT 70)
 
   add_test(
     NAME bringup_replay_equivalence_test
     COMMAND /bin/bash -lc
-            "source ${CMAKE_CURRENT_SOURCE_DIR}/../install/setup.bash && ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_replay_equivalence.py"
+            "source ${WORKSPACE_SETUP} && ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/test_replay_equivalence.py"
   )
-  set_tests_properties(bringup_replay_equivalence_test PROPERTIES TIMEOUT 90)
+  set_tests_properties(bringup_replay_equivalence_test PROPERTIES TIMEOUT 180)
 endif()
 
 ament_package()

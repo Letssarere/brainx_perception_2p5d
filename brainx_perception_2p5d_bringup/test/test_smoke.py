@@ -1,6 +1,7 @@
 from brainx_perception_2p5d_bringup.test_support import (
     collect_slot_transition_sequence,
     collect_stable_pattern,
+    wait_for_color_inputs,
 )
 from brainx_perception_2p5d_msgs.msg import SlotState
 
@@ -49,8 +50,16 @@ def test_insert_remove_reaches_free_then_occupied_then_free():
     assert [SlotState.FREE, SlotState.OCCUPIED, SlotState.FREE] == states[-3:]
 
 
+def test_synthetic_launch_publishes_color_inputs():
+    wait_for_color_inputs(
+        "table_2p5d_synthetic.launch.py",
+        ["scenario:=empty_table"],
+    )
+
+
 if __name__ == "__main__":
     test_empty_table_is_all_free()
     test_occupied_static_matches_expected_slots()
     test_low_visibility_yields_unknown_not_free()
     test_insert_remove_reaches_free_then_occupied_then_free()
+    test_synthetic_launch_publishes_color_inputs()

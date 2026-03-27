@@ -52,10 +52,10 @@ SlotLayout::SlotLayout(LayoutConfig config)
   const double cell_depth = config_.depth / static_cast<double>(config_.rows);
   slots_.reserve(config_.columns * config_.rows);
 
-  for (std::size_t row = 0; row < config_.rows; ++row) {
-    for (std::size_t column = 0; column < config_.columns; ++column) {
+  for (std::size_t column = 0; column < config_.columns; ++column) {
+    for (std::size_t row = 0; row < config_.rows; ++row) {
       SlotPrism prism;
-      prism.id = row * config_.columns + column;
+      prism.id = column * config_.rows + row;
       prism.row = row;
       prism.column = column;
       prism.min_x = config_.origin_x + static_cast<double>(column) * cell_width;

@@ -14,7 +14,7 @@
 ## Unit Validation
 Must cover:
 - slot geometry generation from a pickup rectangle
-- row-major slot ID ordering
+- column-major slot ID ordering in image space
 - FSM state transitions
 - minimum grid update behavior
 
@@ -33,6 +33,14 @@ Acceptance on Jetson:
 - empty table remains stable
 - cup insert/remove transitions are sensible
 - glare or poor visibility yields `UNKNOWN` rather than false `FREE`
+
+## Floor Dev Validation
+Acceptance for the temporary floor-dev profile:
+- a taped floor rectangle can be aligned with `table_frame` in RViz
+- empty floor remains stable `FREE` across all 24 slots
+- one object can drive only the intended slot area to `OCCUPIED`
+- deliberate occlusion yields `UNKNOWN` instead of false `FREE`
+- a recorded bag with generic input topics and `/tf_static` reproduces the live stable pattern
 
 ## Success Criteria
 - Mac demo works without hardware dependencies

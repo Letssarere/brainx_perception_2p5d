@@ -11,14 +11,23 @@ Final output is always:
 ## Fixed Pipeline
 `depth -> frontend reject/filter -> 2.5D evidence grid -> slot query -> tri-state FSM -> /pickup_2p5d/slot_states`
 
+Optional auxiliary inputs may also be present:
+- `color image`
+- `color camera_info`
+
+These do not change the current depth-driven occupancy decision path, but should remain available for calibration and future perception tasks.
+
 ## Coordinate System
 - Use a fixed `table_frame`.
 - Do not use online plane fitting.
 - Load a pickup rectangle from YAML.
 - Split the rectangle into `12 x 2 = 24` slot prisms.
-- Slot IDs are row-major:
-  - front row `0..11`
-  - back row `12..23`
+- Slot IDs are column-major in image space:
+  - top-left `0`
+  - bottom-left `1`
+  - top-right `22`
+  - bottom-right `23`
+  - columns advance left-to-right, rows advance top-to-bottom within each column
 - Slot prism height range:
   - `z in [0.015, 0.25] m`
 

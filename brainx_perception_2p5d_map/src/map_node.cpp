@@ -5,7 +5,6 @@
 #include "geometry_msgs/msg/point_stamped.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "image_geometry/pinhole_camera_model.h"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/image_encodings.hpp"
 #include "sensor_msgs/msg/camera_info.hpp"
@@ -28,6 +27,14 @@ namespace brainx_perception_2p5d_map
 
 namespace
 {
+
+struct CameraIntrinsics
+{
+  double fx{0.0};
+  double fy{0.0};
+  double cx{0.0};
+  double cy{0.0};
+};
 
 std_msgs::msg::ColorRGBA make_color(float r, float g, float b, float a)
 {
@@ -104,26 +111,65 @@ public:
     grid_markers_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>(
       "/pickup_2p5d/grid_markers", 10);
 
+    const auto sensor_data_qos = rclcpp::SensorDataQoS();
     camera_info_sub_ = create_subscription<sensor_msgs::msg::CameraInfo>(
       "/pickup_2p5d/input/camera_info",
-      10,
+      sensor_data_qos,
       std::bind(&MapNode::on_camera_info, this, std::placeholders::_1));
     depth_sub_ = create_subscription<sensor_msgs::msg::Image>(
       "/pickup_2p5d/input/depth",
-      10,
+      sensor_data_qos,
       std::bind(&MapNode::on_depth, this, std::placeholders::_1));
+    color_camera_info_sub_ = create_subscription<sensor_msgs::msg::CameraInfo>(
+      "/pickup_2p5d/input/color_camera_info",
+      sensor_data_qos,
+      std::bind(&MapNode::on_color_camera_info, this, std::placeholders::_1));
+    color_sub_ = create_subscription<sensor_msgs::msg::Image>(
+      "/pickup_2p5d/input/color",
+      sensor_data_qos,
+      std::bind(&MapNode::on_color, this, std::placeholders::_1));
   }
 
 private:
   void on_camera_info(const sensor_msgs::msg::CameraInfo::SharedPtr msg)
   {
-    camera_model_.fromCameraInfo(*msg);
-    have_camera_model_ = true;
+    if (msg->k[0] <= 0.0 || msg->k[4] <= 0.0) {
+      RCLCPP_WARN_THROTTLE(
+        get_logger(),
+        *get_clock(),
+        2000,
+        "Waiting for valid camera intrinsics");
+      return;
+    }
+
+    depth_intrinsics_.fx = msg->k[0];
+    depth_intrinsics_.fy = msg->k[4];
+    depth_intrinsics_.cx = msg->k[2];
+    depth_intrinsics_.cy = msg->k[5];
+    have_depth_intrinsics_ = true;
+  }
+
+  void on_color_camera_info(const sensor_msgs::msg::CameraInfo::SharedPtr msg)
+  {
+    if (msg->k[0] <= 0.0 || msg->k[4] <= 0.0) {
+      return;
+    }
+
+    color_intrinsics_.fx = msg->k[0];
+    color_intrinsics_.fy = msg->k[4];
+    color_intrinsics_.cx = msg->k[2];
+    color_intrinsics_.cy = msg->k[5];
+    have_color_intrinsics_ = true;
+  }
+
+  void on_color(const sensor_msgs::msg::Image::SharedPtr msg)
+  {
+    latest_color_image_ = msg;
   }
 
   void on_depth(const sensor_msgs::msg::Image::SharedPtr msg)
   {
-    if (!have_camera_model_) {
+    if (!have_depth_intrinsics_) {
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 2000, "Waiting for camera info");
       return;
     }
@@ -158,16 +204,13 @@ private:
           continue;
         }
 
-        const auto ray = camera_model_.projectPixelTo3dRay(
-          cv::Point2d(
-            static_cast<double>(u),
-            static_cast<double>(v)));
-
         geometry_msgs::msg::PointStamped point_in;
         point_in.header = msg->header;
-        point_in.point.x = ray.x * *depth_value;
-        point_in.point.y = ray.y * *depth_value;
-        point_in.point.z = ray.z * *depth_value;
+        point_in.point.x =
+          ((static_cast<double>(u) - depth_intrinsics_.cx) / depth_intrinsics_.fx) * *depth_value;
+        point_in.point.y =
+          ((static_cast<double>(v) - depth_intrinsics_.cy) / depth_intrinsics_.fy) * *depth_value;
+        point_in.point.z = *depth_value;
 
         geometry_msgs::msg::PointStamped point_out;
         tf2::doTransform(point_in, point_out, depth_to_table);
@@ -272,13 +315,18 @@ private:
 
   std::unique_ptr<EvidenceGrid> grid_;
   std::unique_ptr<DepthFilter> depth_filter_;
-  image_geometry::PinholeCameraModel camera_model_;
-  bool have_camera_model_{false};
+  CameraIntrinsics depth_intrinsics_;
+  CameraIntrinsics color_intrinsics_;
+  bool have_depth_intrinsics_{false};
+  bool have_color_intrinsics_{false};
   int pixel_stride_{4};
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr depth_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr color_camera_info_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr color_sub_;
+  sensor_msgs::msg::Image::SharedPtr latest_color_image_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr validated_depth_pub_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr visibility_mask_pub_;
   rclcpp::Publisher<brainx_perception_2p5d_msgs::msg::EvidenceGrid>::SharedPtr grid_pub_;

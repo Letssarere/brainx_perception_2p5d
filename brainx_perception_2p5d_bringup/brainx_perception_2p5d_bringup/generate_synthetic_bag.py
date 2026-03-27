@@ -11,6 +11,8 @@ from rclpy.serialization import serialize_message
 
 from brainx_perception_2p5d_bringup.synthetic_scene import (
     CAMERA_INFO_TOPIC,
+    COLOR_CAMERA_INFO_TOPIC,
+    COLOR_TOPIC,
     DEPTH_TOPIC,
     SyntheticSceneConfig,
     SyntheticSceneRenderer,
@@ -66,6 +68,22 @@ def generate_bag(
             "",
         )
     )
+    writer.create_topic(
+        rosbag2_py.TopicMetadata(
+            COLOR_TOPIC,
+            "sensor_msgs/msg/Image",
+            "cdr",
+            "",
+        )
+    )
+    writer.create_topic(
+        rosbag2_py.TopicMetadata(
+            COLOR_CAMERA_INFO_TOPIC,
+            "sensor_msgs/msg/CameraInfo",
+            "cdr",
+            "",
+        )
+    )
 
     period_ns = max(int(round(1_000_000_000.0 / scene_config.publish_rate_hz)), 1)
     start_ns = 1_000_000_000
@@ -80,8 +98,18 @@ def generate_bag(
                 stamp, renderer.render_depth_frame(scenario_name, frame_index)
             )
             camera_info_msg = renderer.make_camera_info_message(stamp)
+            color_msg = renderer.make_color_message(
+                stamp, renderer.render_color_frame(scenario_name, frame_index)
+            )
+            color_camera_info_msg = renderer.make_color_camera_info_message(stamp)
             writer.write(DEPTH_TOPIC, serialize_message(depth_msg), stamp_ns)
             writer.write(CAMERA_INFO_TOPIC, serialize_message(camera_info_msg), stamp_ns)
+            writer.write(COLOR_TOPIC, serialize_message(color_msg), stamp_ns)
+            writer.write(
+                COLOR_CAMERA_INFO_TOPIC,
+                serialize_message(color_camera_info_msg),
+                stamp_ns,
+            )
             output_frame_index += 1
 
     return bag_path

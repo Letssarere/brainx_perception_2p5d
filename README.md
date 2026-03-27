@@ -67,6 +67,52 @@ conda run -n ros_env bash -lc 'source install/setup.bash && \
     bag_path:=/tmp/brainx_2p5d_demo/bag'
 ```
 
+Run the Jetson RealSense integration path:
+```bash
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch brainx_perception_2p5d_bringup table_2p5d_jetson.launch.py \
+  headless:=true
+```
+
+Run the floor-dev integration path against a taped floor rectangle:
+```bash
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch brainx_perception_2p5d_bringup table_2p5d_floor_dev.launch.py \
+  headless:=false
+```
+
+Defaults:
+- `depth_topic:=/camera/depth/image_rect_raw`
+- `camera_info_topic:=/camera/depth/camera_info`
+- `color_topic:=/camera/color/image_raw`
+- `color_camera_info_topic:=/camera/color/camera_info`
+- `camera_frame:=camera_link`
+- `camera_roll:=3.141592653589793`
+- `camera_pitch:=0.0`
+- `camera_yaw:=0.0`
+
+Use the root of the active RealSense TF tree for `camera_frame` so the depth image frame can connect
+through the existing camera transforms. Override the launch args if the live graph uses aligned-depth,
+a different frame name, or an oblique view that needs explicit `camera_roll/pitch/yaw`.
+
+For real-scene replay, record the raw camera topics plus `/tf_static`, then replay with:
+```bash
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 launch brainx_perception_2p5d_bringup table_2p5d_replay.launch.py \
+  bag_path:=/tmp/brainx_2p5d_floor_dev/bag \
+  depth_topic:=/camera/depth/image_rect_raw \
+  camera_info_topic:=/camera/depth/camera_info \
+  color_topic:=/camera/color/image_raw \
+  color_camera_info_topic:=/camera/color/camera_info \
+  replay_tf_static:=true \
+  publish_table_tf:=false
+```
+
+The current occupancy path remains depth-driven. Color topics are plumbed through as auxiliary inputs for calibration and future tasks.
+
 ## Docs
 - [Architecture](/Users/junho/brainx_perception_2p5d/docs/00_architecture.md)
 - [Interfaces](/Users/junho/brainx_perception_2p5d/docs/10_interfaces.md)
@@ -74,4 +120,5 @@ conda run -n ros_env bash -lc 'source install/setup.bash && \
 - [Validation Plan](/Users/junho/brainx_perception_2p5d/docs/30_validation_plan.md)
 - [Jetson Handoff](/Users/junho/brainx_perception_2p5d/docs/40_jetson_handoff.md)
 - [Jetson Session Start](/Users/junho/brainx_perception_2p5d/docs/70_jetson_session_start.md)
+- [Floor Dev Profile](/Users/junho/brainx_perception_2p5d/docs/80_floor_dev_profile.md)
 - [Open Issues](/Users/junho/brainx_perception_2p5d/docs/50_open_issues.md)

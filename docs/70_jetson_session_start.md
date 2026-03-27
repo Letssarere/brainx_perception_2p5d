@@ -54,6 +54,18 @@ Do on Jetson:
 2. Add or adapt a Jetson launch in this repo that remaps RealSense topics into:
    - `/pickup_2p5d/input/depth`
    - `/pickup_2p5d/input/camera_info`
+   - `/pickup_2p5d/input/color`
+   - `/pickup_2p5d/input/color_camera_info`
+   - current repo entrypoint: `table_2p5d_jetson.launch.py`
+   - current defaults:
+     - `/camera/depth/image_rect_raw`
+     - `/camera/depth/camera_info`
+     - `/camera/color/image_raw`
+     - `/camera/color/camera_info`
+     - `camera_frame:=camera_link`
+     - `camera_roll:=3.141592653589793`
+     - `camera_pitch:=0.0`
+     - `camera_yaw:=0.0`
 3. Provide correct `table_frame` TF.
 4. Replace synthetic assumptions with real table and pickup rectangle measurements.
 5. Capture real bags for:
@@ -74,14 +86,25 @@ Do not do on Jetson:
 ## First Jetson Tasks
 1. Inspect the RealSense topic names and camera frame names on Jetson.
 2. Create or adapt a Jetson launch in this repo that remaps those topics into the core input topics.
+   - use `table_2p5d_jetson.launch.py`
+   - override `depth_topic`, `camera_info_topic`, or `camera_frame` if the live graph differs from the defaults
+   - when the camera already publishes its own TF tree, point `camera_frame` at the tree root, not the optical frame
+   - if the live camera view is oblique, override `camera_roll/pitch/yaw` instead of assuming the default transform
 3. Confirm a real depth frame reaches `/pickup_2p5d/input/depth`.
 4. Confirm matching camera info reaches `/pickup_2p5d/input/camera_info`.
-5. Confirm `map_node` and `slots_node` run unchanged.
-6. Verify `/pickup_2p5d/slot_states` publishes in the real setup.
-7. Only then start threshold and performance tuning.
+5. Confirm color image and color camera info reach the generic input topics.
+6. Confirm `map_node` and `slots_node` run unchanged.
+7. Verify `/pickup_2p5d/slot_states` publishes in the real setup.
+8. Only then start threshold and performance tuning.
 
 ## First Success Criteria
 - one Jetson launch starts the pipeline end to end
+- default Jetson launch works with raw RealSense depth:
+  - `/camera/depth/image_rect_raw`
+  - `/camera/depth/camera_info`
+- default Jetson launch also remaps raw RealSense color:
+  - `/camera/color/image_raw`
+  - `/camera/color/camera_info`
 - a real empty table does not produce false `OCCUPIED`
 - low-confidence real scenes produce `UNKNOWN` instead of false `FREE`
 - at least one real recorded bag can be replayed for later Mac-side regression checks
